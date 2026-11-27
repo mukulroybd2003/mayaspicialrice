@@ -1,0 +1,416 @@
+{
+  "entities": {
+    "UserAccount": {
+      "title": "User Account",
+      "description": "Authenticated application user identity and role mapping without PII.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Authentication user ID.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name shown in the ERP header.",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "role": {
+          "type": "string",
+          "description": "ERP role code.",
+          "enum": [
+            "OWNER",
+            "MANAGER",
+            "WEIGHBRIDGE",
+            "PRODUCTION",
+            "ACCOUNTANT",
+            "SALES",
+            "GODOWN_KEEPER"
+          ],
+          "maxLength": 32
+        },
+        "workspaceId": {
+          "type": "string",
+          "description": "Primary workspace identifier owned by or assigned to the user.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when user profile was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when user profile was last updated."
+        }
+      },
+      "required": [
+        "uid",
+        "displayName",
+        "role",
+        "workspaceId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "UserPrivateProfile": {
+      "title": "User Private Profile",
+      "description": "Isolated PII subcollection document holding user email and phone.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Verified account email address.",
+          "minLength": 3,
+          "maxLength": 180
+        },
+        "phone": {
+          "type": "string",
+          "description": "Optional phone number.",
+          "maxLength": 40
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation server timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update server timestamp."
+        }
+      },
+      "required": [
+        "uid",
+        "email",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AdminMarker": {
+      "title": "Admin Marker",
+      "description": "Trusted admin role marker document keyed by Firebase Auth UID.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 3,
+          "maxLength": 180
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "uid",
+        "email",
+        "createdAt"
+      ]
+    },
+    "Workspace": {
+      "title": "ERP Workspace",
+      "description": "Parent mill workspace document acting as the Master Gate for all ERP records.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the workspace owner.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "companyNameEn": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "companyNameBn": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "shortCode": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 12
+        },
+        "recordCount": {
+          "type": "integer",
+          "description": "Total synced ERP records count."
+        },
+        "lastSyncTag": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "companyNameEn",
+        "shortCode",
+        "recordCount",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "MasterRecord": {
+      "title": "ERP Master Record",
+      "description": "Master configuration record (company settings, warehouses, units, categories, items, parties, accounts, employees).",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "workspaceId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "tableName": {
+          "type": "string",
+          "enum": [
+            "company_settings",
+            "warehouses",
+            "product_units",
+            "product_categories",
+            "items",
+            "parties",
+            "accounts",
+            "employees"
+          ],
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "rowId": {
+          "type": "integer"
+        },
+        "payload": {
+          "type": "object",
+          "description": "Native map of typed scalar record fields."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "ARCHIVED"
+          ],
+          "maxLength": 20
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "workspaceId",
+        "tableName",
+        "rowId",
+        "payload",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "LedgerRecord": {
+      "title": "ERP Transactional Ledger Record",
+      "description": "Transactional ERP record (inventory, procurement, drying, milling, sales, accounting, weighbridge).",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "workspaceId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "tableName": {
+          "type": "string",
+          "enum": [
+            "inventory_lots",
+            "stock_ledger",
+            "paddy_purchases",
+            "paddy_purchase_returns",
+            "supplier_bag_ledger",
+            "stock_transfers",
+            "paddy_sales",
+            "paddy_drying_batches",
+            "production_batches",
+            "production_batch_inputs",
+            "production_outputs",
+            "production_cost_sheets",
+            "production_batch_expenses",
+            "production_expense_payments",
+            "sales_invoices",
+            "sales_invoice_items",
+            "sales_invoice_lot_allocations",
+            "journal_entries",
+            "journal_lines",
+            "payments",
+            "weighbridge_logs"
+          ],
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "rowId": {
+          "type": "integer"
+        },
+        "payload": {
+          "type": "object",
+          "description": "Native map of typed scalar transactional fields."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "LOCKED"
+          ],
+          "maxLength": 20
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "workspaceId",
+        "tableName",
+        "rowId",
+        "payload",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AuditRecord": {
+      "title": "ERP Audit & Traceability Record",
+      "description": "Append-only operational audit, QR tag, sync, and backup metadata records.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "workspaceId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "tableName": {
+          "type": "string",
+          "enum": [
+            "qr_tags",
+            "audit_logs",
+            "sync_logs",
+            "backup_history"
+          ],
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "rowId": {
+          "type": "integer"
+        },
+        "payload": {
+          "type": "object",
+          "description": "Native map of typed scalar audit fields."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "workspaceId",
+        "tableName",
+        "rowId",
+        "payload",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserAccount" },
+      "description": "Publicly isolated non-PII user identity documents."
+    },
+    "/users/{userId}/private/{docId}": {
+      "schema": { "$ref": "#/entities/UserPrivateProfile" },
+      "description": "PII subcollection storing user email and phone readable only by owner or admin."
+    },
+    "/admins/{userId}": {
+      "schema": { "$ref": "#/entities/AdminMarker" },
+      "description": "Trusted admin role lookup documents."
+    },
+    "/workspaces/{workspaceId}": {
+      "schema": { "$ref": "#/entities/Workspace" },
+      "description": "Parent workspace documents enforcing ownership and Master Gate."
+    },
+    "/workspaces/{workspaceId}/masterRecords/{recordId}": {
+      "schema": { "$ref": "#/entities/MasterRecord" },
+      "description": "Synced ERP master records (warehouses, items, parties, accounts, settings)."
+    },
+    "/workspaces/{workspaceId}/ledgerRecords/{recordId}": {
+      "schema": { "$ref": "#/entities/LedgerRecord" },
+      "description": "Synced ERP transactional records (purchases, drying, milling, sales, ledger)."
+    },
+    "/workspaces/{workspaceId}/auditRecords/{recordId}": {
+      "schema": { "$ref": "#/entities/AuditRecord" },
+      "description": "Synced ERP audit logs, QR registry, sync logs, and backup metadata."
+    }
+  }
+}

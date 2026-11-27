@@ -1,0 +1,376 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net: default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // Global Hardened Helpers
+    // -------------------------------------------------------------------------
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'mroy151172@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isBootstrappedAdminList() {
+      return isSignedIn() && request.auth.token.email == 'mroy151172@gmail.com';
+    }
+
+    function isWorkspaceOwner(workspaceId) {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/workspaces/$(workspaceId)) &&
+        get(/databases/$(database)/documents/workspaces/$(workspaceId)).data.ownerId == request.auth.uid;
+    }
+
+    // -------------------------------------------------------------------------
+    // Validation Blueprints (Anti-Update-Gap: NO existing() or diff() inside)
+    // -------------------------------------------------------------------------
+    function isValidUserAccount(data) {
+      return data.keys().hasAll(['uid', 'displayName', 'role', 'workspaceId', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['uid', 'displayName', 'role', 'workspaceId', 'createdAt', 'updatedAt']) &&
+        isValidId(data.uid) &&
+        data.uid == request.auth.uid &&
+        data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 120 &&
+        data.role in ['OWNER', 'MANAGER', 'WEIGHBRIDGE', 'PRODUCTION', 'ACCOUNTANT', 'SALES', 'GODOWN_KEEPER'] &&
+        data.role is string && data.role.size() <= 32 &&
+        isValidId(data.workspaceId) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidUserPrivateProfile(data) {
+      return data.keys().hasAll(['uid', 'email', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['uid', 'email', 'phone', 'createdAt', 'updatedAt']) &&
+        isValidId(data.uid) &&
+        data.uid == request.auth.uid &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 180 &&
+        (!('phone' in data) || (data.phone is string && data.phone.size() <= 40)) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidAdminMarker(data) {
+      return data.keys().hasAll(['uid', 'email', 'createdAt']) &&
+        data.keys().hasOnly(['uid', 'email', 'createdAt']) &&
+        isValidId(data.uid) &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 180 &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidWorkspace(data) {
+      return data.keys().hasAll(['ownerId', 'companyNameEn', 'shortCode', 'recordCount', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['ownerId', 'companyNameEn', 'companyNameBn', 'shortCode', 'recordCount', 'lastSyncTag', 'createdAt', 'updatedAt']) &&
+        isValidId(data.ownerId) &&
+        data.companyNameEn is string && data.companyNameEn.size() >= 1 && data.companyNameEn.size() <= 160 &&
+        (!('companyNameBn' in data) || (data.companyNameBn is string && data.companyNameBn.size() <= 160)) &&
+        data.shortCode is string && data.shortCode.size() >= 1 && data.shortCode.size() <= 12 &&
+        data.recordCount is int && data.recordCount >= 0 && data.recordCount <= 1000000 &&
+        (!('lastSyncTag' in data) || (data.lastSyncTag is string && data.lastSyncTag.size() <= 64)) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidMasterRecord(data, workspaceId) {
+      return data.keys().hasAll(['ownerId', 'workspaceId', 'tableName', 'rowId', 'payload', 'status', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['ownerId', 'workspaceId', 'tableName', 'rowId', 'payload', 'status', 'createdAt', 'updatedAt']) &&
+        isValidId(data.ownerId) &&
+        isValidId(data.workspaceId) &&
+        data.workspaceId == workspaceId &&
+        data.tableName is string && data.tableName.size() >= 1 && data.tableName.size() <= 40 &&
+        data.tableName in [
+          'company_settings',
+          'warehouses',
+          'product_units',
+          'product_categories',
+          'items',
+          'parties',
+          'accounts',
+          'employees'
+        ] &&
+        data.rowId is int && data.rowId >= 0 &&
+        data.payload is map && data.payload.keys().size() <= 40 &&
+        data.status is string && data.status.size() <= 20 &&
+        data.status in ['ACTIVE', 'ARCHIVED'] &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidLedgerRecord(data, workspaceId) {
+      return data.keys().hasAll(['ownerId', 'workspaceId', 'tableName', 'rowId', 'payload', 'status', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['ownerId', 'workspaceId', 'tableName', 'rowId', 'payload', 'status', 'createdAt', 'updatedAt']) &&
+        isValidId(data.ownerId) &&
+        isValidId(data.workspaceId) &&
+        data.workspaceId == workspaceId &&
+        data.tableName is string && data.tableName.size() >= 1 && data.tableName.size() <= 40 &&
+        data.tableName in [
+          'inventory_lots',
+          'stock_ledger',
+          'paddy_purchases',
+          'paddy_purchase_returns',
+          'supplier_bag_ledger',
+          'stock_transfers',
+          'paddy_sales',
+          'paddy_drying_batches',
+          'production_batches',
+          'production_batch_inputs',
+          'production_outputs',
+          'production_cost_sheets',
+          'production_batch_expenses',
+          'production_expense_payments',
+          'sales_invoices',
+          'sales_invoice_items',
+          'sales_invoice_lot_allocations',
+          'journal_entries',
+          'journal_lines',
+          'payments',
+          'weighbridge_logs'
+        ] &&
+        data.rowId is int && data.rowId >= 0 &&
+        data.payload is map && data.payload.keys().size() <= 40 &&
+        data.status is string && data.status.size() <= 20 &&
+        data.status in ['ACTIVE', 'LOCKED'] &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidAuditRecord(data, workspaceId) {
+      return data.keys().hasAll(['ownerId', 'workspaceId', 'tableName', 'rowId', 'payload', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['ownerId', 'workspaceId', 'tableName', 'rowId', 'payload', 'createdAt', 'updatedAt']) &&
+        isValidId(data.ownerId) &&
+        isValidId(data.workspaceId) &&
+        data.workspaceId == workspaceId &&
+        data.tableName is string && data.tableName.size() >= 1 && data.tableName.size() <= 40 &&
+        data.tableName in ['qr_tags', 'audit_logs', 'sync_logs', 'backup_history'] &&
+        data.rowId is int && data.rowId >= 0 &&
+        data.payload is map && data.payload.keys().size() <= 40 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    // -------------------------------------------------------------------------
+    // /users/{userId} & Isolated PII /users/{userId}/private/{docId}
+    // -------------------------------------------------------------------------
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isSignedIn() && (resource.data.uid == request.auth.uid || isBootstrappedAdminList());
+      allow create: if isSignedIn() &&
+        isValidId(userId) &&
+        isOwner(userId) &&
+        isValidUserAccount(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        (incoming().role != 'OWNER' || isAdmin());
+      allow update: if isSignedIn() &&
+        isValidId(userId) &&
+        isValidUserAccount(incoming()) &&
+        incoming().uid == existing().uid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          isAdmin() ||
+          (
+            isOwner(userId) &&
+            incoming().role == existing().role &&
+            incoming().workspaceId == existing().workspaceId &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'updatedAt'])
+          )
+        );
+      allow delete: if isValidId(userId) && isAdmin();
+
+      match /private/{docId} {
+        allow get: if isValidId(userId) && isValidId(docId) && (isOwner(userId) || isAdmin());
+        allow list: if isSignedIn() && (resource.data.uid == request.auth.uid || isBootstrappedAdminList());
+        allow create: if isSignedIn() &&
+          isValidId(userId) &&
+          isValidId(docId) &&
+          isOwner(userId) &&
+          isValidUserPrivateProfile(incoming()) &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time;
+        allow update: if isSignedIn() &&
+          isValidId(userId) &&
+          isValidId(docId) &&
+          isValidUserPrivateProfile(incoming()) &&
+          incoming().uid == existing().uid &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          (
+            isAdmin() ||
+            (isOwner(userId) && incoming().diff(existing()).affectedKeys().hasOnly(['email', 'phone', 'updatedAt']))
+          );
+        allow delete: if isValidId(userId) && isValidId(docId) && (isOwner(userId) || isAdmin());
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // /admins/{userId}
+    // -------------------------------------------------------------------------
+    match /admins/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isBootstrappedAdminList();
+      allow create: if isSignedIn() &&
+        isValidId(userId) &&
+        isValidAdminMarker(incoming()) &&
+        incoming().createdAt == request.time &&
+        isAdmin();
+      allow update: if false;
+      allow delete: if isValidId(userId) && isAdmin();
+    }
+
+    // -------------------------------------------------------------------------
+    // /workspaces/{workspaceId} (Master Gate) & ERP Subcollections
+    // -------------------------------------------------------------------------
+    match /workspaces/{workspaceId} {
+      allow get: if isSignedIn() && isValidId(workspaceId) &&
+        ((resource == null && workspaceId == request.auth.uid) || (resource != null && existing().ownerId == request.auth.uid) || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isBootstrappedAdminList());
+      allow create: if isSignedIn() &&
+        isValidId(workspaceId) &&
+        isValidWorkspace(incoming()) &&
+        incoming().ownerId == request.auth.uid &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isSignedIn() &&
+        isValidId(workspaceId) &&
+        isValidWorkspace(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          isAdmin() ||
+          (
+            existing().ownerId == request.auth.uid &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['companyNameEn', 'companyNameBn', 'shortCode', 'recordCount', 'lastSyncTag', 'updatedAt'])
+          )
+        );
+      allow delete: if isValidId(workspaceId) && isAdmin();
+
+      match /masterRecords/{recordId} {
+        allow get: if isSignedIn() && isValidId(workspaceId) && isValidId(recordId) &&
+          ((resource == null && workspaceId == request.auth.uid) || (resource != null && existing().ownerId == request.auth.uid) || isAdmin());
+        allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isBootstrappedAdminList());
+        allow create: if isSignedIn() &&
+          isValidId(workspaceId) &&
+          isValidId(recordId) &&
+          isValidMasterRecord(incoming(), workspaceId) &&
+          incoming().ownerId == request.auth.uid &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          isWorkspaceOwner(workspaceId);
+        allow update: if isSignedIn() &&
+          isValidId(workspaceId) &&
+          isValidId(recordId) &&
+          isValidMasterRecord(incoming(), workspaceId) &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().workspaceId == existing().workspaceId &&
+          incoming().tableName == existing().tableName &&
+          incoming().rowId == existing().rowId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          (
+            isAdmin() ||
+            (
+              isWorkspaceOwner(workspaceId) &&
+              (
+                incoming().diff(existing()).affectedKeys().hasOnly(['payload', 'updatedAt']) ||
+                incoming().diff(existing()).affectedKeys().hasOnly(['payload', 'status', 'updatedAt'])
+              )
+            )
+          );
+        allow delete: if isSignedIn() && isValidId(workspaceId) && isValidId(recordId) &&
+          (isAdmin() || isWorkspaceOwner(workspaceId));
+      }
+
+      match /ledgerRecords/{recordId} {
+        allow get: if isSignedIn() && isValidId(workspaceId) && isValidId(recordId) &&
+          ((resource == null && workspaceId == request.auth.uid) || (resource != null && existing().ownerId == request.auth.uid) || isAdmin());
+        allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isBootstrappedAdminList());
+        allow create: if isSignedIn() &&
+          isValidId(workspaceId) &&
+          isValidId(recordId) &&
+          isValidLedgerRecord(incoming(), workspaceId) &&
+          incoming().ownerId == request.auth.uid &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          isWorkspaceOwner(workspaceId);
+        allow update: if isSignedIn() &&
+          isValidId(workspaceId) &&
+          isValidId(recordId) &&
+          isValidLedgerRecord(incoming(), workspaceId) &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().workspaceId == existing().workspaceId &&
+          incoming().tableName == existing().tableName &&
+          incoming().rowId == existing().rowId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          (
+            isAdmin() ||
+            (
+              isWorkspaceOwner(workspaceId) &&
+              existing().status != 'LOCKED' &&
+              (
+                incoming().diff(existing()).affectedKeys().hasOnly(['payload', 'updatedAt']) ||
+                incoming().diff(existing()).affectedKeys().hasOnly(['payload', 'status', 'updatedAt'])
+              )
+            )
+          );
+        allow delete: if isSignedIn() && isValidId(workspaceId) && isValidId(recordId) &&
+          (isAdmin() || isWorkspaceOwner(workspaceId));
+      }
+
+      match /auditRecords/{recordId} {
+        allow get: if isSignedIn() && isValidId(workspaceId) && isValidId(recordId) &&
+          ((resource == null && workspaceId == request.auth.uid) || (resource != null && existing().ownerId == request.auth.uid) || isAdmin());
+        allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isBootstrappedAdminList());
+        allow create: if isSignedIn() &&
+          isValidId(workspaceId) &&
+          isValidId(recordId) &&
+          isValidAuditRecord(incoming(), workspaceId) &&
+          incoming().ownerId == request.auth.uid &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          isWorkspaceOwner(workspaceId);
+        allow update: if isSignedIn() &&
+          isValidId(workspaceId) &&
+          isValidId(recordId) &&
+          isValidAuditRecord(incoming(), workspaceId) &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().workspaceId == existing().workspaceId &&
+          incoming().tableName == existing().tableName &&
+          incoming().rowId == existing().rowId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          (
+            isAdmin() ||
+            (isWorkspaceOwner(workspaceId) && incoming().diff(existing()).affectedKeys().hasOnly(['payload', 'updatedAt']))
+          );
+        allow delete: if isValidId(workspaceId) && isValidId(recordId) &&
+          (isAdmin() || isWorkspaceOwner(workspaceId));
+      }
+    }
+  }
+}

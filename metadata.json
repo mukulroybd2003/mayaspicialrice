@@ -1,0 +1,10 @@
+{
+  "name": "Maya spicial Rice",
+  "description": "Enterprise Rice Mill Management System with offline-first PWA, multi-godown paddy \u0026 rice inventory, Siddho/Atap production batch costing, QR traceability, digital weighbridge, and double-entry accounting.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,341 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@font-face {
+  font-family: 'SutonnyMJ';
+  src: local('SutonnyOMJ'), local('SutonnyOMJ Regular'), local('SutonnyMJ Unicode'), local('SutonnyMJ'), local('SutonnyMJ Regular'), local('Nikosh'), local('SolaimanLipi'), local('Kalpurush');
+  font-weight: 400;
+  font-style: normal;
+  unicode-range: U+0980-09FF, U+200C-200D, U+25CC;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SutonnyMJ';
+  src: local('SutonnyOMJ Bold'), local('SutonnyOMJ'), local('SutonnyMJ Unicode Bold'), local('SutonnyMJ Unicode'), local('SutonnyMJ Bold'), local('SutonnyMJ'), local('Nikosh'), local('SolaimanLipi'), local('Kalpurush');
+  font-weight: 700;
+  font-style: normal;
+  unicode-range: U+0980-09FF, U+200C-200D, U+25CC;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SutonnyBanglaUnicode';
+  src: local('SutonnyOMJ'), local('SutonnyOMJ Regular'), local('SutonnyMJ Unicode'), local('SutonnyMJ'), local('Nikosh'), local('SolaimanLipi'), local('Kalpurush');
+  font-weight: 400;
+  font-style: normal;
+  unicode-range: U+0980-09FF, U+200C-200D, U+25CC;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SutonnyBanglaUnicode';
+  src: local('SutonnyOMJ Bold'), local('SutonnyOMJ'), local('SutonnyMJ Unicode Bold'), local('SutonnyMJ Unicode'), local('SutonnyMJ Bold'), local('Nikosh'), local('SolaimanLipi'), local('Kalpurush');
+  font-weight: 700;
+  font-style: normal;
+  unicode-range: U+0980-09FF, U+200C-200D, U+25CC;
+  font-display: swap;
+}
+
+@layer base {
+  :root {
+    --font-display: 'Plus Jakarta Sans', 'DM Sans', 'SutonnyMJ', 'SutonnyBanglaUnicode', 'Tiro Bangla', 'Noto Sans Bengali', system-ui, sans-serif;
+    --font-sans: 'DM Sans', 'Plus Jakarta Sans', 'SutonnyMJ', 'SutonnyBanglaUnicode', 'Tiro Bangla', 'Noto Sans Bengali', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', 'SutonnyMJ', 'SutonnyBanglaUnicode', 'Tiro Bangla', 'Noto Sans Bengali', ui-monospace, monospace;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: contain;
+  }
+
+  html[lang="bn"] {
+    --font-display: 'SutonnyMJ', 'SutonnyBanglaUnicode', 'SutonnyOMJ', 'Tiro Bangla', 'Noto Sans Bengali', system-ui, sans-serif;
+    --font-sans: 'SutonnyMJ', 'SutonnyBanglaUnicode', 'SutonnyOMJ', 'Tiro Bangla', 'Noto Sans Bengali', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', 'SutonnyMJ', 'SutonnyBanglaUnicode', 'SutonnyOMJ', 'Tiro Bangla', 'Noto Sans Bengali', ui-monospace, monospace;
+  }
+
+  @media screen {
+    html[lang="bn"] {
+      font-size: 17.5px;
+      line-height: 1.58;
+    }
+
+    @media (max-width: 639px) {
+      html[lang="bn"] {
+        font-size: 16.5px;
+      }
+    }
+
+    html[lang="bn"] .text-\[10px\] {
+      font-size: 0.78rem;
+      line-height: 1.38;
+    }
+
+    html[lang="bn"] .text-\[11px\] {
+      font-size: 0.84rem;
+      line-height: 1.42;
+    }
+
+    html[lang="bn"] .text-xs {
+      font-size: 0.9rem;
+      line-height: 1.48;
+    }
+
+    html[lang="bn"] .text-sm {
+      font-size: 0.98rem;
+      line-height: 1.52;
+    }
+
+    html[lang="bn"] input,
+    html[lang="bn"] select,
+    html[lang="bn"] textarea,
+    html[lang="bn"] button,
+    html[lang="bn"] th,
+    html[lang="bn"] td {
+      line-height: 1.5;
+    }
+  }
+
+  body {
+    font-family: var(--font-sans);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  html[lang="bn"] body,
+  html[lang="bn"] input,
+  html[lang="bn"] select,
+  html[lang="bn"] textarea,
+  html[lang="bn"] button,
+  html[lang="bn"] table {
+    font-family: var(--font-sans);
+  }
+
+  h1, h2, h3, h4, .font-display {
+    font-family: var(--font-display);
+  }
+
+  .font-mono, .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@page {
+  size: auto;
+  margin: 14mm 15mm;
+}
+
+@media print {
+  :root {
+    color-scheme: light;
+  }
+
+  html,
+  body {
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    font-family: 'Calibri', 'Plus Jakarta Sans', 'DM Sans', 'Segoe UI', serif;
+    font-size: 11pt !important;
+    line-height: 1.45 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  html[lang="bn"],
+  html[lang="bn"] *,
+  html[lang="bn"] body,
+  html[lang="bn"] table,
+  html[lang="bn"] th,
+  html[lang="bn"] td,
+  html[lang="bn"] .font-mono,
+  html[lang="bn"] h1,
+  html[lang="bn"] h2,
+  html[lang="bn"] h3,
+  html[lang="bn"] h4,
+  #qr-label-print-portal[lang="bn"],
+  #qr-label-print-portal[lang="bn"] * {
+    font-family: 'SutonnyMJ', 'SutonnyBanglaUnicode', 'SutonnyOMJ', 'Tiro Bangla', 'Noto Sans Bengali', serif !important;
+  }
+
+  /* Hide navigation shell, sticky toolbars, mobile nav, toasts, and explicit no-print elements */
+  aside,
+  header,
+  nav[aria-label="Mobile Navigation"],
+  .no-print,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Expand layout shell and scrollable wrappers so tables are never clipped */
+  body > div,
+  main,
+  section,
+  article,
+  .overflow-x-auto,
+  .overflow-y-auto,
+  .overflow-auto,
+  .overflow-hidden {
+    overflow: visible !important;
+    max-width: none !important;
+    max-height: none !important;
+  }
+
+  main {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Normalize text, backgrounds, shadows, and card borders for crisp paper/PDF output */
+  *,
+  *::before,
+  *::after {
+    color: #000000 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  div,
+  section,
+  article,
+  main,
+  form {
+    background: #FFFFFF !important;
+    border-color: #CBD5E1 !important;
+  }
+
+  /* Keep headings attached to the table or section below them */
+  h1,
+  h2,
+  h3,
+  h4,
+  caption {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  /* Comprehensive MS Word table formatting for ledgers, invoices, cashbooks, and stock tables */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    border-spacing: 0 !important;
+    margin: 8px 0 14px !important;
+    font-size: 10pt !important;
+    line-height: 1.35 !important;
+    background: #FFFFFF !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  thead {
+    display: table-header-group !important;
+  }
+
+  tbody {
+    display: table-row-group !important;
+  }
+
+  tfoot {
+    display: table-footer-group !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    background: #FFFFFF !important;
+  }
+
+  thead tr {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  table,
+  th,
+  td {
+    border: 1px solid #000000 !important;
+  }
+
+  th,
+  td {
+    padding: 4px 6px !important;
+    vertical-align: top !important;
+    background: #FFFFFF !important;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+  }
+
+  thead th,
+  thead td {
+    background: #E6E6E6 !important;
+    font-weight: 700 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  tfoot th,
+  tfoot td {
+    background: #F3F4F6 !important;
+    font-weight: 700 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  tbody tr:nth-child(even) td {
+    background: #FAFAFA !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  td.font-mono,
+  th.font-mono,
+  td.tabular-nums,
+  th.tabular-nums {
+    font-variant-numeric: tabular-nums !important;
+    white-space: nowrap;
+  }
+
+  /* Keep images, QR codes, and summary cards from splitting mid-page */
+  img,
+  svg,
+  canvas,
+  .print-avoid-break {
+    max-width: 100% !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .print-page-break {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+
+  /* Isolate printable QR label sheet when printing stock batch tags */
+  body.printing-qr-labels > *:not(#qr-label-print-portal) {
+    display: none !important;
+  }
+
+  body.printing-qr-labels #qr-label-print-portal {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .qr-print-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .qr-label-card {
+    border: 1.2px solid #000000 !important;
+    border-radius: 6px !important;
+    padding: 8px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    background: #FFFFFF !important;
+  }
+}
